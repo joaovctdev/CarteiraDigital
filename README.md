@@ -64,15 +64,39 @@ a URL estiver preenchida.
 
 ### 3. Abrir o site
 
-Duas opções:
-
 - **Rápido, só pra testar:** dê duplo clique em `index.html` para abrir no
   navegador.
-- **Recomendado (principalmente para usar no celular):** hospede a pasta em
-  algo gratuito como o **GitHub Pages** ou a **Netlify** (arraste a pasta).
-  Assim você ganha um link fixo (`https://...`) que pode abrir no celular e
-  usar a opção do navegador **"Adicionar à tela de início"**, deixando o site
-  com cara de aplicativo.
+- **Hospedado (GitHub Pages)**: veja a seção [Deploy no GitHub Pages](#deploy-no-github-pages)
+  abaixo — assim você ganha um link fixo (`https://...`) que pode abrir no
+  celular e usar a opção **"Adicionar à tela de início"**, deixando o site com
+  cara de aplicativo.
+
+## Deploy no GitHub Pages
+
+Este repositório já vem com um workflow (`.github/workflows/deploy.yml`) que
+publica o site automaticamente a cada push na `main`. Como `js/config.js` não
+é versionado (contém a URL do seu Apps Script — veja o aviso acima), o
+workflow monta esse arquivo na hora do deploy a partir de um **secret** do
+repositório, então a URL nunca aparece no código-fonte nem no histórico do
+git.
+
+Configuração (uma vez só):
+
+1. No repositório do GitHub: **Settings → Secrets and variables → Actions →
+   New repository secret**.
+   - Nome: `APPS_SCRIPT_URL`
+   - Valor: a URL do seu Apps Script (a mesma que está em `js/config.js`,
+     terminada em `/exec`)
+2. **Settings → Pages → Build and deployment → Source:** troque para
+   **"GitHub Actions"** (se já havia publicado antes pelo método clássico
+   "Deploy from a branch", troque para essa opção — os dois métodos não
+   convivem: o que valer é o que estiver selecionado aqui).
+3. Dê um push (ou rode o workflow manualmente em **Actions → Deploy to
+   GitHub Pages → Run workflow**). O link do site aparece em **Settings →
+   Pages** depois que o workflow terminar (ícone verde em **Actions**).
+
+Depois disso, qualquer alteração no site (novo push na `main`) já publica
+sozinha — não precisa repetir nada.
 
 > **Já tinha implantado antes de ler isto?** O `Code.gs` ganhou 3 colunas novas
 > e 2 ações novas (parcelamento). Repita o passo 1 (colar o `Code.gs`

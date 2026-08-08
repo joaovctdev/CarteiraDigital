@@ -1,0 +1,59 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Preparar pasta de publicação (sem apps-script/ nem .git)
+        run: |
+          mkdir -p _site/css _site/js
+          cp index.html _site/
+          cp -r css/. _site/css/
+          cp -r js/. _site/js/
+          rm -f _site/js/config.example.js
+
+      - name: Gerar js/config.js a partir do secret APPS_SCRIPT_URL
+        run: |
+          if [ -z "${{ secrets.APPS_SCRIPT_URL }}" ]; then
+            echo "::error::Secret APPS_SCRIPT_URL não configurado (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          cat > _site/js/config.js <<EOF
+          const CONFIG = {
+            API_URL: '${{ secrets.APPS_SCRIPT_URL }}',
+            SHEET_VIEW_URL: 'https://docs.google.com/spreadsheets/d/11TvXn9iX4wDqCR_KM3IrUbIGELfAC_zosZ3MoRMmiJ0/edit'
+          };
+          EOF
+
+      - name: Upload do artefato do Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
