@@ -9,7 +9,7 @@
  */
 const API = (() => {
   function isConfigured() {
-    return !!CONFIG.API_URL && !CONFIG.API_URL.startsWith('COLE_AQUI');
+    return !!CONFIG.API_URL && !CONFIG.API_URL.startsWith('https://script.google.com/macros/s/AKfycbwCPdlw7Ww-737x-e5J9HSjxXzzhL1eEeBsKhkT8cr4plHn7OiF_7SuHQfuvU_3uYF0Jg/exec');
   }
 
   async function get(action) {
