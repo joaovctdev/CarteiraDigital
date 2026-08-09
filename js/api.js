@@ -9,37 +9,42 @@
  */
 const API = (() => {
   function isConfigured() {
-    return !!CONFIG.API_URL && !CONFIG.API_URL.startsWith('https://script.google.com/macros/s/AKfycbwCPdlw7Ww-737x-e5J9HSjxXzzhL1eEeBsKhkT8cr4plHn7OiF_7SuHQfuvU_3uYF0Jg/exec');
+    // Retorna true se houver uma URL e ela não for a string padrão de placeholder
+    return (
+      !!CONFIG.API_URL &&
+      CONFIG.API_URL !==
+        "https://script.google.com/macros/s/AKfycbwCPdlw7Ww-737x-e5J9HSjxXzzhL1eEeBsKhkT8cr4plHn7OiF_7SuHQfuvU_3uYF0Jg/exec"
+    );
   }
 
   async function get(action) {
     const url = `${CONFIG.API_URL}?action=${encodeURIComponent(action)}`;
-    const res = await fetch(url, { method: 'GET' });
+    const res = await fetch(url, { method: "GET" });
     if (!res.ok) throw new Error(`Erro de rede (${res.status})`);
     const json = await res.json();
-    if (!json.ok) throw new Error(json.error || 'Erro desconhecido');
+    if (!json.ok) throw new Error(json.error || "Erro desconhecido");
     return json.data;
   }
 
   async function post(payload) {
     const res = await fetch(CONFIG.API_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload)
+      method: "POST",
+      body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(`Erro de rede (${res.status})`);
     const json = await res.json();
-    if (!json.ok) throw new Error(json.error || 'Erro desconhecido');
+    if (!json.ok) throw new Error(json.error || "Erro desconhecido");
     return json.data;
   }
 
   return {
     isConfigured,
-    listTransactions: () => get('list'),
-    listDados: () => get('dados'),
-    addTransaction: (data) => post({ action: 'add', data }),
-    addManyTransactions: (items) => post({ action: 'addMany', items }),
-    updateTransaction: (id, data) => post({ action: 'update', id, data }),
-    deleteTransaction: (id) => post({ action: 'delete', id }),
-    deleteGroup: (groupId) => post({ action: 'deleteGroup', groupId })
+    listTransactions: () => get("list"),
+    listDados: () => get("dados"),
+    addTransaction: (data) => post({ action: "add", data }),
+    addManyTransactions: (items) => post({ action: "addMany", items }),
+    updateTransaction: (id, data) => post({ action: "update", id, data }),
+    deleteTransaction: (id) => post({ action: "delete", id }),
+    deleteGroup: (groupId) => post({ action: "deleteGroup", groupId }),
   };
 })();
