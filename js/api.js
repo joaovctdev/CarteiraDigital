@@ -9,13 +9,8 @@
  */
 const API = (() => {
   function isConfigured() {
-    // Retorna true se houver uma URL e ela não for a string padrão de placeholder
-    return (
-      !!CONFIG.API_URL &&
-      CONFIG.API_URL !==
-        "https://script.google.com/macros/s/AKfycbwCPdlw7Ww-737x-e5J9HSjxXzzhL1eEeBsKhkT8cr4plHn7OiF_7SuHQfuvU_3uYF0Jg/exec"
-    );
-  }
+  return Boolean(CONFIG.API_URL);
+}
 
   async function get(action) {
     const url = `${CONFIG.API_URL}?action=${encodeURIComponent(action)}`;
