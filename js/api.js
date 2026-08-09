@@ -9,8 +9,9 @@
  */
 const API = (() => {
   function isConfigured() {
-  return Boolean(CONFIG.API_URL);
-}
+    // Basta checar se a URL existe e não está vazia
+    return Boolean(CONFIG && CONFIG.API_URL && CONFIG.API_URL.trim() !== "");
+  }
 
   async function get(action) {
     const url = `${CONFIG.API_URL}?action=${encodeURIComponent(action)}`;
