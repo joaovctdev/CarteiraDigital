@@ -7,6 +7,8 @@
  * leitura/escrita à sua planilha para quem a tiver.
  */
 const CONFIG = {
-  API_URL: 'COLE_AQUI_A_URL_DO_APP_SCRIPT_TERMINADA_EM_/exec',
-  SHEET_VIEW_URL: 'https://docs.google.com/spreadsheets/d/11TvXn9iX4wDqCR_KM3IrUbIGELfAC_zosZ3MoRMmiJ0/edit'
+  API_URL:
+    "https://script.google.com/macros/s/AKfycbwCPdlw7Ww-737x-e5J9HSjxXzzhL1eEeBsKhkT8cr4plHn7OiF_7SuHQfuvU_3uYF0Jg/exec",
+  SHEET_VIEW_URL:
+    "https://docs.google.com/spreadsheets/d/11TvXn9iX4wDqCR_KM3IrUbIGELfAC_zosZ3MoRMmiJ0/edit",
 };
