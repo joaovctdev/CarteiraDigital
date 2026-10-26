@@ -35,6 +35,7 @@ const API = (() => {
 
   return {
     isConfigured,
+    bootstrap: () => get("bootstrap"),
     listTransactions: () => get("list"),
     listDados: () => get("dados"),
     addTransaction: (data) => post({ action: "add", data }),
@@ -42,5 +43,9 @@ const API = (() => {
     updateTransaction: (id, data) => post({ action: "update", id, data }),
     deleteTransaction: (id) => post({ action: "delete", id }),
     deleteGroup: (groupId) => post({ action: "deleteGroup", groupId }),
+    setConfig: (data) => post({ action: "setConfig", data }),
+    addRecorrente: (data) => post({ action: "addRecorrente", data }),
+    updateRecorrente: (id, data) => post({ action: "updateRecorrente", id, data }),
+    deleteRecorrente: (id) => post({ action: "deleteRecorrente", id }),
   };
 })();

@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "flat-type-hierarchy",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-10-26T00:14:45.737Z",
+        "reason": "Claude judgment: Operate-mode product UI; impeccable operate.md prescribes a tight 1.125–1.2 scale, and dominance is carried by 40px money figures (spans, not headings)"
+      }
+    ]
+  }
+}
