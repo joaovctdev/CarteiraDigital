@@ -1,7 +1,8 @@
 # Carteira Digital 👛
 
 Site (HTML + CSS + JavaScript puro, sem frameworks) para controlar seus gastos
-separados por **Gastos Fixos, Débitos, Créditos, Entradas e Caixa**, salvando
+separados por **Gastos Fixos, Débitos, Créditos, Entradas e Caixa**, com teto
+mensal de gastos, caixa rendendo % do CDI e projeção dos próximos 6 meses, salvando
 tudo automaticamente na sua planilha do Google Sheets. Cada lançamento guarda
 **motivo, local, aplicativo/conta e valor**. Totalmente responsivo (funciona
 bem em celular, tablet e desktop).
@@ -103,25 +104,107 @@ sozinha — não precisa repetir nada.
 > atualizado) e depois **Gerenciar implantações → ✏️ → Nova versão →
 > Implantar** — sem isso o site continua funcionando, só que sem parcelas.
 
+> **Atualizando para a versão 2 (teto, caixa com rendimento, recorrentes e projeção)?**
+> Cole o `Code.gs` novo no Apps Script e faça **Gerenciar implantações → ✏️ →
+> Nova versão → Implantar**. Na primeira chamada o script cria sozinho as
+> abas `Config` e `Recorrentes` e a coluna `RecorrenteId` na aba `Carteira`;
+> nenhuma linha antiga é alterada. Enquanto a nova versão não for publicada,
+> o site continua lançando normalmente e avisa que teto e recorrentes ainda
+> não podem ser salvos.
+
+> **Atualizando para a versão 2.1 (Renda CLT e metas)?** Cole o `Code.gs`
+> novo e publique uma **Nova versão** do mesmo jeito. O script cria a aba
+> `Metas` sozinho; as chaves novas da aba `Config` aparecem quando você salvar
+> a aba **Renda** pela primeira vez.
+
 ## Estrutura de dados na planilha
 
-A aba `Carteira` recebe automaticamente estas colunas (o script cria o
-cabeçalho sozinho no primeiro uso):
+### Aba `Carteira` (um lançamento por linha)
 
-| ID | Data | Tipo | Natureza | Motivo | Local | Aplicativo | Valor | CriadoEm | ParcelaGrupo | ParcelaAtual | ParcelaTotal |
-|----|------|------|----------|--------|-------|------------|-------|----------|--------------|--------------|--------------|
+| ID | Data | Tipo | Natureza | Motivo | Local | Aplicativo | Valor | CriadoEm | ParcelaGrupo | ParcelaAtual | ParcelaTotal | RecorrenteId |
+|----|------|------|----------|--------|-------|------------|-------|----------|--------------|--------------|--------------|--------------|
 
-- **Tipo**: `Fixo`, `Debito`, `Credito`, `Entrada` ou `Caixa` — a categoria do
-  lançamento (uma aba do site para cada uma).
-- **Natureza**: `Entrada` (soma no saldo) ou `Saida` (subtrai do saldo).
-  Definida automaticamente pelo Tipo (Fixo/Débito/Crédito = saída, Entrada =
-  entrada); para `Caixa` você escolhe na hora, já que movimentações em
-  dinheiro podem ser nos dois sentidos.
-- **Motivo / Local / Aplicativo / Valor**: exatamente como pedido — cada
-  lançamento é separado por esses quatro campos, além da data.
-- **ParcelaGrupo / ParcelaAtual / ParcelaTotal**: preenchidos só quando o
-  lançamento faz parte de uma compra parcelada (veja abaixo). Ficam em branco
-  em lançamentos normais.
+- **Tipo**:
+  - `Entrada`: dinheiro que chegou (salário, pix recebido).
+  - `Fixo`, `Debito`, `Credito`: dinheiro que saiu (gastos).
+  - `Caixa`: **transferência** entre a conta e o caixa do Mercado Pago.
+    Natureza `Entrada` significa *guardei*, `Saida` significa *resgatei*.
+    Não conta como renda nem como gasto, só muda onde o dinheiro está.
+    Isso acaba com a contagem dobrada da versão anterior: o salário entra uma
+    vez (como Entrada) e o que você guarda passa da conta para o caixa.
+- **ParcelaGrupo / ParcelaAtual / ParcelaTotal**: só em compras parceladas.
+- **RecorrenteId**: só em lançamentos gerados a partir de um recorrente.
+  Serve para saber que aquele recorrente já foi lançado no mês.
+
+### Aba `Config` (chave | valor)
+
+| Chave | O que é |
+|-------|---------|
+| `CDI_ANUAL` | CDI ao ano em %, ex.: `14.9`. Atualize quando o Copom mudar a Selic. |
+| `PCT_CDI` | Quanto do CDI o caixa rende, ex.: `120`. |
+| `TETO_MENSAL` | Quanto você se permite gastar por mês (fixos + débito + crédito). `0` desliga o teto. |
+| `CAIXA_SALDO_INICIAL` / `CAIXA_DATA_INICIAL` | Saldo real do caixa numa data. Lançamentos de Caixa até essa data já estão dentro desse saldo. |
+
+| `RENDA_BRUTO` | Salário bruto CLT. `0` desliga a aba Renda. |
+| `RENDA_DIA_PAGTO` | Dia do pagamento. Até 24 = salário do mês anterior; 25 ou mais = do próprio mês. |
+| `RENDA_ADIANT_PCT` / `RENDA_ADIANT_DIA` | Adiantamento quinzenal (% do bruto) e o dia em que cai. |
+| `RENDA_DEPENDENTES` / `RENDA_DESCONTOS` | Dependentes para o IR e outros descontos fixos do contracheque (R$). |
+| `RENDA_AJUSTE` | Diferença entre o contracheque real e o cálculo, guardada quando você confirma um salário diferente. |
+| `RENDA_ADMISSAO` | Data de admissão, para o 13º proporcional. |
+| `RENDA_INICIO` | Mês a partir do qual a renda gera lançamentos a confirmar (preenchido sozinho). |
+| `FERIAS` / `FERIAS_ABONO` / `FERIAS_ADIANTA_13` | Períodos de férias (JSON), venda de 10 dias e 13º adiantado nas férias. |
+| `BENEFICIOS` | Benefícios (JSON). Só os marcados como "entra na conta" viram entrada. |
+
+Tudo isso também pode ser editado no próprio site, nas abas **Ajustes** e **Renda**.
+
+### Aba `Metas`
+
+| ID | Nome | Valor | Mes |
+|----|------|-------|-----|
+
+Quanto você quer ter de patrimônio (conta + caixa) em um mês (`AAAA-MM`).
+
+### Aba `Recorrentes`
+
+| ID | Tipo | Natureza | Motivo | Local | Aplicativo | Valor | Dia | Ativo | Inicio | Fim |
+|----|------|----------|--------|-------|------------|-------|-----|-------|--------|-----|
+
+São modelos que se repetem todo mês (salário, aluguel, internet). Eles **não
+criam linhas sozinhos**. Todo mês aparecem no Início em "A lançar neste
+mês", e um toque em **Lançar** registra o lançamento. Para ajustar o valor
+antes, toque na linha.
+
+## Como as contas são feitas
+
+- **Disponível em conta** = entradas − saídas − guardado + resgatado, até hoje.
+- **Caixa** = saldo inicial + guardado − resgatado + rendimento estimado.
+  O rendimento é calculado como CDB: taxa diária = `((1 + CDI)^(1/252) − 1) × % do CDI`,
+  capitalizada por dia útil (seg–sex, sem feriados). Com 120% de um CDI de
+  14,90% a.a., isso dá cerca de 18,14% a.a. O IR regressivo (22,5% até
+  180 dias, 20% até 360, 17,5% até 720 e 15% depois) é estimado por aporte,
+  e os resgates saem dos aportes mais antigos primeiro. O IOF é ignorado.
+  Se o valor do app do Mercado Pago estiver diferente, use **Caixa → Saldo
+  real**: a conta recomeça desse valor.
+- **Teto do mês**: soma os gastos do mês e os recorrentes de saída ainda não
+  lançados, mostra quanto ainda está livre e quanto dá para gastar por dia
+  até o fim do mês.
+- **Renda (CLT)**: INSS progressivo de 2026 (teto R$ 8.475,55) e IRRF com o
+  redutor da Lei 15.270/2025 (isento até R$ 5.000, redução parcial até
+  R$ 7.350). 13º em duas parcelas (30/11 sem descontos; 20/12 com INSS e IR
+  separados), proporcional à admissão. Férias pagas 2 dias antes, com 1/3 e o
+  abono de 10 dias isento; o salário seguinte vem só pelos dias trabalhados.
+  Os valores são estimativas: confirme o primeiro salário com o valor real do
+  contracheque e toque em **Usar nos próximos** para calibrar.
+- **Projeção**: o resto do mês atual + pelo menos 6 meses (até o mês da meta
+  mais distante, no máximo 24). Entradas pela renda cadastrada (salário, 13º,
+  férias, benefícios que entram) e recorrentes de entrada; sem eles, a média
+  dos últimos 3 meses. Saídas pelo **teto** (o plano), ou fixos + parcelas,
+  se forem maiores; sem teto, pelas médias. A sobra de cada mês vai para o
+  caixa e rende. Se a média real de gastos passar do teto, aparece um aviso
+  com o valor no ritmo atual.
+- **Metas**: compara o patrimônio projetado no mês da meta com o valor
+  desejado e mostra quanto guardar a mais por mês (com o rendimento do caixa
+  até lá), ou qual teto fecha a conta.
 
 ## Parcelamento (opcional)
 
@@ -149,22 +232,28 @@ de parcelas — o campo "Valor" passa a significar **valor de cada parcela**.
 
 ## Funcionalidades do site
 
-- **Resumo**: saldo total em caixa, gráfico de barras comparando as 5
-  categorias no período, parcelamentos em aberto e últimos lançamentos.
-- **Abas por categoria** (Fixos, Débitos, Créditos, Entradas, Caixa): total do
-  período, busca por motivo/local/app, lista de lançamentos.
-- **Parcelamento opcional**: marque uma compra como parcelada e o site lança
-  cada parcela no mês certo, calculando sozinho quanto ainda falta pagar.
-- **Filtro por período**: mês atual por padrão, com opção de ver qualquer mês
-  ou todos os períodos.
-- **Adicionar/editar/excluir** lançamentos pelo botão flutuante `+` ou tocando
-  em um lançamento existente.
-- **Funciona offline-ish**: guarda os últimos dados no `localStorage` do
-  navegador, então abre instantaneamente e mostra um aviso se a conexão
-  falhar.
-- **Totalmente responsivo**: navegação inferior por abas no celular, barra
-  superior no desktop; tudo se ajusta ao tamanho da tela.
-- **Tema claro/escuro automático**, seguindo a preferência do sistema.
+- **Início**: o que está disponível em conta, o caixa e o patrimônio; o teto
+  do mês com quanto ainda dá para gastar por dia; o fluxo do mês (entrou,
+  saiu, guardou) por categoria; os recorrentes a lançar; os parcelamentos em
+  aberto e os últimos lançamentos.
+- **Lançamentos**: todos os lançamentos do mês agrupados por dia, com filtros
+  (Entradas, Saídas, Fixos, Débito, Crédito, Caixa) e busca.
+- **Caixa**: saldo com rendimento estimado, quanto rendeu no mês, IR
+  estimado, botões Guardar e Resgatar, histórico de 6 meses e ajuste pelo
+  saldo real.
+- **Renda**: contracheque (bruto → INSS → IR → líquido), férias, 13º,
+  benefícios e o calendário de recebimentos dos próximos 12 meses. O salário,
+  o 13º e as férias aparecem no Início no mês certo para você confirmar.
+- **Projeção**: metas com data, gráfico e tabela mês a mês do patrimônio.
+- **Ajustes**: teto mensal, CDI, % do CDI, saldo inicial do caixa e
+  recorrentes.
+- **Rápido**: as mudanças aparecem na tela na hora e são salvas na planilha em
+  segundo plano. O ponto no canto superior direito mostra o estado. Se a
+  planilha recusar, a mudança é desfeita e aparece "Tentar de novo".
+- **Seletor de mês** no topo (‹ mês ›). Tocar no nome do mês volta para o
+  mês atual.
+- **Funciona sem internet** com os últimos dados salvos no navegador.
+- **Responsivo**, com tema claro e escuro automático.
 
 ## Arquivos
 
@@ -174,7 +263,8 @@ CarteiraDigital/
 ├── css/style.css         # todo o visual e responsividade
 ├── js/config.js          # URL do Apps Script (edite aqui)
 ├── js/api.js             # comunicação com o Apps Script
-├── js/app.js             # lógica do site (abas, formulário, cálculos)
+├── js/finance.js         # cálculos (saldos, rendimento CDB, teto, projeção) — funções puras
+├── js/app.js             # estado, telas, formulário e sincronização
 ├── apps-script/Code.gs   # backend a ser colado no Google Apps Script
 └── README.md
 ```
